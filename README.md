@@ -67,8 +67,6 @@ The application is split into two phases:
 
 ---
 
----
-
 ## 🛠️ Tech Stack
 
 | Layer       | Technology |
@@ -79,9 +77,6 @@ The application is split into two phases:
 | **Auth**    | JWT (python‑jose), bcrypt |
 | **PDF**     | ReportLab |
 | **Tooling** | Uvicorn, Axios, React Router, React Toastify |
-
----
-
 
 ---
 
