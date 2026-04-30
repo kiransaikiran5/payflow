@@ -30,3 +30,7 @@ frontend/.env
 
 # Generated payslip files
 payslips/
+backend/uploads/
+
+.claude
+**/settings.local.json

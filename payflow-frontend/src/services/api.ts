@@ -16,23 +16,35 @@ import {
   Loan,
   Compliance,
   BulkPayrollResponse,
-  AuditLog
+  AuditLog,
+  Reimbursement,
+  OvertimeRecord,
+  TaxReport,
+  PayrollDispute,
+  DocFile,
+  AnalyticsResponse,
 } from '../types';
 
 const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 
+// ---------- Helper for multipart requests (no Content-Type) ----------
+const getAuthHeaders = (): Record<string, string> => {
+  const token = localStorage.getItem('access_token');
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  return headers;
+};
+
+// ---------- Standard JSON API instance ----------
 const api = axios.create({
   baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// ---------- Interceptors ----------
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
   (error) => Promise.reject(error)
@@ -44,7 +56,6 @@ api.interceptors.response.use(
     if (error.response?.status === 401 || error.response?.status === 403) {
       localStorage.removeItem('access_token');
       localStorage.removeItem('user');
-      // ✅ FIXED: use replace() to avoid creating a skippable history entry
       window.location.replace('/login');
     }
     return Promise.reject(error);
@@ -134,10 +145,8 @@ export const payslipAPI = {
   getAll: () => api.get<Payslip[]>('/payslips/'),
   getByEmployee: (employeeId: number) =>
     api.get<Payslip[]>(`/payslips/employee/${employeeId}`),
-  getByPayroll: (payrollId: number) =>
-    api.get<Payslip>(`/payslips/by-payroll/${payrollId}`),
   generate: (payrollId: number) =>
-    api.post<Payslip>(`/payslips/${payrollId}/generate`),
+    api.post<Payslip>(`/payslips/${payrollId}`),
   download: (payslipId: number) =>
     api.get(`/payslips/${payslipId}/download`, { responseType: 'blob' }),
 };
@@ -229,6 +238,81 @@ export const exportAPI = {
 export const auditLogAPI = {
   getAll: (entity?: string) =>
     api.get<AuditLog[]>('/audit-logs/', { params: { entity } }),
+};
+
+// ==================== Phase 3 Additions ====================
+export const reimbursementAPI = {
+  create: (data: FormData) =>
+    axios.post<Reimbursement>(`${API_BASE}/reimbursements/`, data, {
+      headers: getAuthHeaders(),
+    }),
+  update: (id: number, status: string) => {
+    const formData = new FormData();
+    formData.append('status', status);
+    return axios.put<Reimbursement>(
+      `${API_BASE}/reimbursements/${id}/status`,
+      formData,
+      { headers: getAuthHeaders() }
+    );
+  },
+  getAll: (employeeId?: number) =>
+    api.get<Reimbursement[]>('/reimbursements/', { params: { employee_id: employeeId } }),
+};
+
+export const overtimeAPI = {
+  create: (data: any) => api.post<OvertimeRecord>('/overtime/', data),
+  getAll: (employeeId?: number, month?: string) =>
+    api.get<OvertimeRecord[]>('/overtime/', { params: { employee_id: employeeId, month } }),
+};
+
+export const taxReportAPI = {
+  generate: (employeeId: number, financialYear: string) =>
+    api.post<TaxReport>(`/tax-reports/generate/${employeeId}/${financialYear}`),
+  getAll: (employeeId?: number) =>
+    api.get<TaxReport[]>('/tax-reports/', { params: { employee_id: employeeId } }),
+  // ✅ add this
+  download: (employeeId: number, financialYear: string) =>
+    api.get(`/tax-reports/download/${employeeId}/${financialYear}`, { responseType: 'blob' }),
+};
+
+// ✅ Dispute API now requires payroll_id as per backend schema
+export const disputeAPI = {
+  create: (data: {
+    employee_id: number;
+    payroll_id: number;
+    issue_title: string;
+    description?: string;
+  }) => api.post<PayrollDispute>('/disputes/', data),
+  update: (id: number, status: string, resolution?: string) =>
+    api.put<PayrollDispute>(`/disputes/${id}`, { status, resolution }),
+  getAll: (employeeId?: number) =>
+    api.get<PayrollDispute[]>('/disputes/', { params: { employee_id: employeeId } }),
+};
+
+// Document upload – employee_id & document_type as query params, file in body
+export const documentAPI = {
+  upload: (employeeId: string, documentType: string, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return axios.post<DocFile>(
+      `${API_BASE}/documents/upload`,
+      formData,
+      {
+        headers: getAuthHeaders(),
+        params: {
+          employee_id: employeeId,
+          document_type: documentType,
+        },
+      }
+    );
+  },
+  getAll: (employeeId?: number) =>
+    api.get<DocFile[]>('/documents/', { params: { employee_id: employeeId } }),
+};
+
+export const analyticsAPI = {
+  getDashboard: () => api.get<AnalyticsResponse>('/analytics/'),
 };
 
 export default api;

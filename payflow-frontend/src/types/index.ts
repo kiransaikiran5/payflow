@@ -150,3 +150,85 @@ export interface BulkPayrollResponse {
   failed: { employee_id: number; reason: string }[];
   total_processed: number;
 }
+
+// -- phase 3 --
+export interface Reimbursement {
+    id: number;
+    employee_id: number;
+    title: string;
+    amount: number;
+    receipt_file?: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    submitted_at: string;
+}
+export interface OvertimeRecord {
+    id: number;
+    employee_id: number;
+    hours_worked: number;
+    overtime_rate: number;
+    total_amount: number;
+    month: string;
+}
+export interface TaxReport {
+    id: number;
+    employee_id: number;
+    financial_year: string;
+    total_earnings: number;
+    total_tax: number;
+    generated_at: string;
+}
+export interface PayrollDispute {
+    id: number;
+    employee_id: number;
+    payroll_id: number;
+    issue_title: string;
+    description?: string;
+    status: string;
+    created_at: string;
+    resolved_at?: string;
+}
+export interface DocFile {
+    id: number;
+    employee_id: number;
+    document_type: string;
+    file_url: string;
+    uploaded_at: string;
+}
+
+export interface AnalyticsResponse {
+  total_employees: number;
+  current_month_payroll: number;
+  pending_payslips: number;
+  total_overtime_this_month: number;
+  total_bonuses_this_month: number;
+  department_breakdown: Array<{
+    department: string;
+    total_salary: number;
+    employee_count: number;
+    avg_salary: number;
+  }>;
+  payroll_trend: Array<{
+    month: string;
+    net_payout: number;
+    total_overtime: number;
+    total_bonuses: number;
+  }>;
+  overtime_analysis: Array<{
+    month: string;
+    total_hours: number;
+    total_amount: number;
+    employee_count: number;
+  }>;
+  bonus_distribution: Array<{
+    month: string;
+    total_bonus: number;
+    employee_count: number;
+  }>;
+  employee_cost: Array<{
+    department: string;
+    total_salary: number;
+    total_overtime: number;
+    total_bonuses: number;
+    total_cost: number;
+  }>;
+}

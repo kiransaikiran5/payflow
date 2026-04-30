@@ -40,6 +40,12 @@ class Employee(Base):
     salary_history = relationship("SalaryHistory", back_populates="employee")
     loans = relationship("Loan", back_populates="employee")
     compliance = relationship("Compliance", back_populates="employee", uselist=False)
+    
+    reimbursements = relationship("Reimbursement", back_populates="employee")
+    overtime_records = relationship("Overtime", back_populates="employee")
+    tax_reports = relationship("TaxReport", back_populates="employee")
+    disputes = relationship("PayrollDispute", back_populates="employee")
+    documents = relationship("Document", back_populates="employee")
 
 class SalaryComponent(Base):
     __tablename__ = "salary_components"
@@ -211,3 +217,62 @@ class AuditLog(Base):
     timestamp = Column(TIMESTAMP, server_default=func.now())
     
     user = relationship("User")
+    
+# ---- Phase 3 Models ----
+class Reimbursement(Base):
+    __tablename__ = "reimbursements"
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey('employees.id'))
+    title = Column(String(200), nullable=False)
+    amount = Column(DECIMAL(10,2), nullable=False)
+    receipt_file = Column(String(255), nullable=True)
+    status = Column(Enum('PENDING','APPROVED','REJECTED'), default='PENDING')
+    submitted_at = Column(TIMESTAMP, server_default=func.now())
+    
+    employee = relationship("Employee", back_populates="reimbursements")
+
+class Overtime(Base):
+    __tablename__ = "overtime"
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey('employees.id'))
+    hours_worked = Column(DECIMAL(5,2), nullable=False)
+    overtime_rate = Column(DECIMAL(10,2), default=1.5)
+    total_amount = Column(DECIMAL(10,2), nullable=False)
+    # base_salary_per_hour = Column(DECIMAL(10,2), nullable=False)
+    month = Column(Date, nullable=False)
+    
+    employee = relationship("Employee", back_populates="overtime_records")
+
+class TaxReport(Base):
+    __tablename__ = "tax_reports"
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey('employees.id'))
+    financial_year = Column(String(9), nullable=False)
+    total_earnings = Column(DECIMAL(12,2), default=0)
+    total_tax = Column(DECIMAL(10,2), default=0)
+    generated_at = Column(TIMESTAMP, server_default=func.now())
+    employee = relationship("Employee", back_populates="tax_reports")
+
+class PayrollDispute(Base):
+    __tablename__ = "payroll_disputes"
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey('employees.id'))
+    payroll_id = Column(Integer, ForeignKey('payroll.id'), nullable=True)
+    issue_title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    status = Column(Enum('OPEN','IN_PROGRESS','RESOLVED','CLOSED'), default='OPEN')
+    created_at = Column(TIMESTAMP, server_default=func.now())
+    resolved_at = Column(TIMESTAMP, nullable=True)
+    
+    employee = relationship("Employee", back_populates="disputes")
+    payroll = relationship("Payroll")
+
+class Document(Base):
+    __tablename__ = "documents"
+    id = Column(Integer, primary_key=True, index=True)
+    employee_id = Column(Integer, ForeignKey('employees.id'))
+    document_type = Column(String(100), nullable=False)
+    file_url = Column(String(255), nullable=False)
+    uploaded_at = Column(TIMESTAMP, server_default=func.now())
+    
+    employee = relationship("Employee", back_populates="documents")

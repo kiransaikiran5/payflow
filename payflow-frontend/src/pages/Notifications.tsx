@@ -1,29 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Container,
-  Typography,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
-  Box,
-  Button,
-  Chip,
-  IconButton,
-  CircularProgress,
-  Divider,
-  Tabs,
-  Tab,
-  Checkbox,
-  FormControlLabel,
-  Skeleton,
-  Alert,
+  Container, Typography, Box, Button, Chip, Checkbox, FormControlLabel,
+  Tabs, Tab, Paper, Grid, Card, CardContent, CardActions, IconButton,
+  Skeleton, Alert, Avatar, Tooltip
 } from '@mui/material';
 import {
-  FiberManualRecord,
-  CheckCircle,
-  NotificationsOff,
-  Refresh,
+  CheckCircle, NotificationsOff, Refresh,
+  Delete, DoneAll
 } from '@mui/icons-material';
 import { notificationAPI } from '../services/api';
 import { Notification } from '../types';
@@ -69,6 +52,17 @@ const NotificationsPage: React.FC = () => {
       );
     } catch (err) {
       toast.error('Failed to mark as read');
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await notificationAPI.delete(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      setSelectedIds(prev => prev.filter(i => i !== id));
+      toast.success('Notification deleted');
+    } catch (err) {
+      toast.error('Failed to delete notification');
     }
   };
 
@@ -142,32 +136,50 @@ const NotificationsPage: React.FC = () => {
   const filteredNotifications = notifications.filter(n =>
     tabValue === 0 ? true : !n.is_read
   );
-
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  const getNotificationIcon = (title: string): string => {
+  // Extract emoji from title (returns a string like "💰", or "🔔" as fallback)
+  const extractEmoji = (title: string): string => {
     const trimmed = title.trimStart();
     if (trimmed.length === 0) return '🔔';
-    const firstChar = trimmed.charAt(0);
-    if (firstChar.charCodeAt(0) > 127) return firstChar;
-    if (firstChar >= '\uD800' && firstChar <= '\uDBFF' && trimmed.length > 1) {
-      return trimmed.substring(0, 2);
+    const code = trimmed.codePointAt(0);
+    if (code && code > 127) {
+      return String.fromCodePoint(code);
     }
     return '🔔';
   };
 
+  // Remove emoji prefix from title (so we don't show it twice)
+  const cleanTitle = (title: string): string => {
+    const trimmed = title.trimStart();
+    if (trimmed.length === 0) return title;
+    const code = trimmed.codePointAt(0);
+    if (code && code > 127) {
+      // Remove the first character (or two, if it's a surrogate pair)
+      const emojiLen = String.fromCodePoint(code).length;
+      return trimmed.slice(emojiLen).trimStart();
+    }
+    return title;
+  };
+
   if (loading) {
     return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
         <Skeleton variant="text" width={300} height={60} sx={{ mb: 2 }} />
-        <Skeleton variant="rectangular" width="100%" height={400} sx={{ borderRadius: 2 }} />
+        <Grid container spacing={2}>
+          {[1, 2, 3, 4].map((i) => (
+            <Grid item xs={12} sm={6} md={4} key={i}>
+              <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 2 }} />
+            </Grid>
+          ))}
+        </Grid>
       </Container>
     );
   }
 
   if (error) {
     return (
-      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
         <Alert severity="error" action={<Button onClick={fetchNotifications}>Retry</Button>}>
           {error}
         </Alert>
@@ -176,7 +188,7 @@ const NotificationsPage: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="md" sx={{ py: 3 }}>
+    <Container maxWidth="lg" sx={{ py: 3 }}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
         <Box display="flex" alignItems="center" gap={2}>
@@ -207,157 +219,164 @@ const NotificationsPage: React.FC = () => {
       </Box>
 
       {/* Tabs */}
-      <Paper sx={{ mb: 2 }}>
+      <Paper sx={{ mb: 3 }}>
         <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
           <Tab label="All Notifications" />
           <Tab label={`Unread (${unreadCount})`} />
         </Tabs>
       </Paper>
 
-      {/* Batch actions */}
+      {/* Batch actions bar */}
       {selectedIds.length > 0 && (
-        <Paper sx={{ p: 1, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Paper sx={{ p: 1.5, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography variant="body2" sx={{ flexGrow: 1 }}>
             {selectedIds.length} selected
           </Typography>
-          <Button size="small" onClick={handleMarkSelectedAsRead}>
+          <Button size="small" onClick={handleMarkSelectedAsRead} startIcon={<DoneAll />}>
             Mark as Read
           </Button>
-          <Button size="small" color="error" onClick={handleDeleteSelected}>
+          <Button
+            size="small"
+            color="error"
+            onClick={handleDeleteSelected}
+            startIcon={<Delete />}
+            variant="contained"
+          >
             Delete
           </Button>
         </Paper>
       )}
 
-      {/* Notifications list */}
-      <Paper>
-        {filteredNotifications.length === 0 ? (
-          <Box sx={{ py: 6, textAlign: 'center' }}>
-            <NotificationsOff sx={{ fontSize: 48, color: 'action.disabled', mb: 1 }} />
-            <Typography color="textSecondary" gutterBottom>
-              {tabValue === 0 ? 'No notifications yet.' : 'No unread notifications.'}
-            </Typography>
-            <Box display="flex" justifyContent="center" gap={2} mt={2}>
-              <Button variant="outlined" startIcon={<Refresh />} onClick={fetchNotifications}>
-                Refresh
+      {/* Notification Cards */}
+      {filteredNotifications.length === 0 ? (
+        <Paper sx={{ py: 8, textAlign: 'center', borderRadius: 2 }}>
+          <NotificationsOff sx={{ fontSize: 64, color: 'action.disabled', mb: 2 }} />
+          <Typography variant="h6" color="textSecondary" gutterBottom>
+            {tabValue === 0 ? 'All clear! 🎉' : 'No unread notifications'}
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+            {tabValue === 0
+              ? 'You have read all your notifications.'
+              : 'Everything is caught up.'}
+          </Typography>
+          <Box display="flex" justifyContent="center" gap={2}>
+            <Button variant="outlined" startIcon={<Refresh />} onClick={fetchNotifications}>
+              Refresh
+            </Button>
+            {isHR && (
+              <Button variant="contained" onClick={() => navigate('/payroll')}>
+                Generate Payroll
               </Button>
-              {isHR && (
-                <Button variant="contained" onClick={() => navigate('/payroll')}>
-                  Generate Payroll
-                </Button>
-              )}
-            </Box>
-            <Typography variant="caption" color="textSecondary" display="block" mt={1}>
-              {isHR
-                ? 'Try generating a payroll or updating compliance to trigger notifications.'
-                : 'You will see notifications when your payroll is processed or your profile is updated.'}
-            </Typography>
+            )}
           </Box>
-        ) : (
-          <>
-            <Box sx={{ p: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={
-                      selectedIds.length === filteredNotifications.length &&
-                      filteredNotifications.length > 0
-                    }
-                    indeterminate={
-                      selectedIds.length > 0 &&
-                      selectedIds.length < filteredNotifications.length
-                    }
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                  />
-                }
-                label="Select All"
-              />
-            </Box>
-            <List disablePadding>
-              {filteredNotifications.map((notification, index) => (
-                <React.Fragment key={notification.id}>
-                  <ListItem
-                    sx={{
-                      backgroundColor: notification.is_read ? 'transparent' : 'action.hover',
-                      borderLeft: notification.is_read ? 'none' : '4px solid #1976d2',
-                      py: 2,
-                    }}
-                    secondaryAction={
-                      <Checkbox
-                        edge="end"
-                        checked={selectedIds.includes(notification.id)}
-                        onChange={() => handleSelect(notification.id)}
-                      />
-                    }
-                  >
-                    <Box
-                      onClick={() => handleNotificationClick(notification)}
-                      sx={{
-                        display: 'flex',
-                        width: '100%',
-                        cursor: 'pointer',
-                        alignItems: 'flex-start',
+        </Paper>
+      ) : (
+        <>
+          <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={selectedIds.length === filteredNotifications.length && filteredNotifications.length > 0}
+                  indeterminate={selectedIds.length > 0 && selectedIds.length < filteredNotifications.length}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                />
+              }
+              label="Select All"
+            />
+          </Box>
+          <Grid container spacing={2}>
+            {filteredNotifications.map((notification) => (
+              <Grid item xs={12} sm={6} lg={4} key={notification.id}>
+                <Card
+                  sx={{
+                    position: 'relative',
+                    borderLeft: notification.is_read ? 'none' : '4px solid #1976d2',
+                    transition: 'box-shadow 0.2s',
+                    '&:hover': {
+                      boxShadow: 4,
+                      cursor: 'pointer',
+                    },
+                    bgcolor: notification.is_read ? 'background.paper' : '#f0f7ff',
+                  }}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  {/* Selection checkbox */}
+                  <Box sx={{ position: 'absolute', top: 8, left: 8, zIndex: 2 }}>
+                    <Checkbox
+                      checked={selectedIds.includes(notification.id)}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        handleSelect(notification.id);
                       }}
-                    >
-                      <Box sx={{ mr: 2, fontSize: '2rem', minWidth: 40, textAlign: 'center' }}>
-                        {getNotificationIcon(notification.title)}
-                      </Box>
-                      <ListItemText
-                        primary={
-                          <Box display="flex" alignItems="center" gap={1}>
-                            <Typography variant="subtitle1">
-                              {notification.title}
-                            </Typography>
-                            {!notification.is_read && (
-                              <Chip
-                                label="NEW"
-                                color="primary"
-                                size="small"
-                                icon={<FiberManualRecord sx={{ fontSize: 10 }} />}
-                              />
-                            )}
-                          </Box>
-                        }
-                        secondary={
-                          <>
-                            {/* Fixed: set component="span" to avoid nested <p> tags */}
-                            <Typography variant="body2" component="span" sx={{ mt: 0.5, display: 'block' }}>
-                              {notification.message}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              component="span"
-                              sx={{ mt: 0.5, display: 'block' }}
-                            >
-                              {formatDistanceToNow(new Date(notification.created_at), {
-                                addSuffix: true,
-                              })}
-                            </Typography>
-                          </>
-                        }
-                      />
+                      size="small"
+                      sx={{ p: 0 }}
+                    />
+                  </Box>
+
+                  {/* Delete button (top right corner) */}
+                  <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 2 }}>
+                    <Tooltip title="Delete">
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(notification.id);
+                        }}
+                        color="error"
+                      >
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+
+                  <CardContent sx={{ pl: 5, pt: 4, pr: 5 }}>
+                    <Box display="flex" alignItems="center" gap={1} mb={1}>
+                      {/* Only the emoji, no duplicate */}
+                      <Avatar sx={{ bgcolor: 'primary.light', width: 32, height: 32, fontSize: 18 }}>
+                        {extractEmoji(notification.title)}
+                      </Avatar>
+                      <Typography variant="subtitle1" fontWeight={notification.is_read ? 400 : 600}>
+                        {cleanTitle(notification.title)}
+                      </Typography>
                       {!notification.is_read && (
+                        <Chip
+                          label="NEW"
+                          color="primary"
+                          size="small"
+                          sx={{ ml: 'auto' }}
+                        />
+                      )}
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1, pl: 5 }}>
+                      {notification.message}
+                    </Typography>
+                    <Typography variant="caption" color="text.disabled" sx={{ pl: 5 }}>
+                      {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                    </Typography>
+                  </CardContent>
+
+                  {/* Mark as read action (bottom right) */}
+                  <CardActions sx={{ justifyContent: 'flex-end', p: 1 }}>
+                    {!notification.is_read && (
+                      <Tooltip title="Mark as read">
                         <IconButton
+                          size="small"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleMarkAsRead(notification.id);
                           }}
-                          title="Mark as read"
-                          size="small"
                         >
                           <CheckCircle fontSize="small" />
                         </IconButton>
-                      )}
-                    </Box>
-                  </ListItem>
-                  {index < filteredNotifications.length - 1 && <Divider />}
-                </React.Fragment>
-              ))}
-            </List>
-          </>
-        )}
-      </Paper>
+                      </Tooltip>
+                    )}
+                  </CardActions>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </>
+      )}
     </Container>
   );
 };

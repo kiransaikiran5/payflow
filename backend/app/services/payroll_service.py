@@ -2,7 +2,8 @@ from decimal import Decimal
 from datetime import date
 from sqlalchemy.orm import Session
 from app.models.models import (
-    Employee, EmployeeSalary, SalaryComponent, Payroll, Tax, Bonus, Loan, Compliance
+    Employee, EmployeeSalary, SalaryComponent, Payroll,
+    Tax, Bonus, Loan, Compliance, Overtime
 )
 from app.services.notification_service import create_notification
 
@@ -14,9 +15,8 @@ def calculate_payroll(
     attendance_adjustment: Decimal = Decimal("0.00")
 ):
     """
-    Calculate earnings, deductions, and net salary for an employee.
-    Returns (total_earnings, total_deductions, net_salary).
-    Also updates loan balances in-memory (they are committed later).
+    Calculate earnings, deductions, net salary, and collect loan objects for an employee.
+    Returns (total_earnings, total_deductions, net_salary, active_loans).
     """
     employee = db.query(Employee).filter(Employee.id == employee_id).first()
     if not employee:
@@ -39,7 +39,7 @@ def calculate_payroll(
             continue
 
         if component.amount_type == "FIXED":
-            amount = assignment.amount
+            amount = Decimal(str(assignment.amount))
         else:  # PERCENTAGE
             amount = (base_salary * component.value) / Decimal("100.00")
 
@@ -53,7 +53,6 @@ def calculate_payroll(
     if tax_record:
         tax_amount = (base_salary * tax_record.tax_percentage) / Decimal("100.00")
         total_deductions += tax_amount
-        # Update tax_amount in record (will be committed later)
         tax_record.tax_amount = tax_amount
 
     # ---- 3. Bonuses for the month ----
@@ -63,9 +62,9 @@ def calculate_payroll(
         Bonus.created_at <= month
     ).all()
     for bonus in bonuses:
-        total_earnings += bonus.bonus_amount
+        total_earnings += Decimal(str(bonus.bonus_amount))
 
-    # ---- 4. Attendance Adjustment (passed as parameter) ----
+    # ---- 4. Attendance Adjustment ----
     total_deductions += attendance_adjustment
 
     # ---- 5. Compliance (Statutory Deductions) ----
@@ -73,8 +72,8 @@ def calculate_payroll(
         Compliance.employee_id == employee_id
     ).first()
     if compliance:
-        pf = compliance.pf_amount if compliance.pf_amount else Decimal("0.00")
-        esi = compliance.esi_amount if compliance.esi_amount else Decimal("0.00")
+        pf = Decimal(str(compliance.pf_amount or 0))
+        esi = Decimal(str(compliance.esi_amount or 0))
         total_deductions += pf + esi
 
     # ---- 6. Active Loan EMI Deduction ----
@@ -84,19 +83,25 @@ def calculate_payroll(
     ).all()
 
     for loan in active_loans:
-        # Deduct the lesser of the installment or remaining amount
-        deduction = min(loan.installment_amount, loan.remaining_amount)
+        deduction = min(
+            Decimal(str(loan.installment_amount)),
+            Decimal(str(loan.remaining_amount))
+        )
         total_deductions += deduction
-
-        # Update loan balance (in-memory, will be committed by caller)
         loan.remaining_amount -= deduction
         if loan.remaining_amount <= 0:
             loan.remaining_amount = Decimal("0.00")
             loan.status = "PAID"
 
-        # Notify employee (optional, we can do it in generate function)
-        # We'll handle notifications in generate_payroll_for_employee for clarity.
+    # ---- 7. Overtime payments for the month ----
+    overtime_records = db.query(Overtime).filter(
+        Overtime.employee_id == employee_id,
+        Overtime.month == month
+    ).all()
+    for ovt in overtime_records:
+        total_earnings += Decimal(str(ovt.total_amount))
 
+    # ---- Final Net Salary ----
     net_salary = total_earnings - total_deductions
     return total_earnings, total_deductions, net_salary, active_loans
 
@@ -108,11 +113,9 @@ def generate_payroll_for_employee(
     attendance_adjustment: Decimal = Decimal("0.00")
 ):
     """
-    Create or update a payroll record for a specific employee and month.
-    Includes loan EMI deduction and marks loans as PAID when fully repaid.
-    Sends appropriate notifications to the employee.
+    Create a payroll record for an employee, including all components.
+    Notifies the employee and handles loan updates.
     """
-    # Check for existing payroll
     existing = db.query(Payroll).filter(
         Payroll.employee_id == employee_id,
         Payroll.month == month
@@ -124,12 +127,12 @@ def generate_payroll_for_employee(
     if not employee:
         raise ValueError("Employee not found")
 
-    # Calculate payroll (and capture active loans)
+    # Full calculation
     earnings, deductions, net, active_loans = calculate_payroll(
         employee_id, month, db, attendance_adjustment
     )
 
-    # Create payroll record
+    # Create payroll
     payroll = Payroll(
         employee_id=employee_id,
         total_earnings=earnings,
@@ -142,10 +145,10 @@ def generate_payroll_for_employee(
     db.commit()
     db.refresh(payroll)
 
-    # Now commit loan balance changes (they were modified in-memory)
+    # Commit loan changes (balances were modified in-memory)
     db.commit()
 
-    # ---- Notifications for Loan Events ----
+    # Notifications for loans
     for loan in active_loans:
         if loan.status == "PAID":
             create_notification(
@@ -155,8 +158,10 @@ def generate_payroll_for_employee(
                 message=f"Your loan of ₹{loan.loan_amount:,.2f} has been completely repaid."
             )
         else:
-            # Calculate how much was deducted this month
-            deduction = min(loan.installment_amount, loan.loan_amount)
+            deduction = min(
+                Decimal(str(loan.installment_amount)),
+                Decimal(str(loan.loan_amount))
+            )
             create_notification(
                 db,
                 user_id=employee.user_id,
@@ -167,7 +172,7 @@ def generate_payroll_for_employee(
                 )
             )
 
-    # ---- Standard Payroll Notification ----
+    # Standard payroll notification
     create_notification(
         db,
         user_id=employee.user_id,

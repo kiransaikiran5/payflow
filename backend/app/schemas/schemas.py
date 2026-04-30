@@ -421,3 +421,138 @@ class ComplianceResponse(ComplianceBase):
     updated_at: Optional[datetime]
     class Config:
         from_attributes = True
+        
+# -- Phase 3 --
+# Reimbursement
+class ReimbursementCreate(BaseModel):
+    employee_id: int
+    title: str
+    amount: float
+    # receipt_file: Optional[str] = None
+
+class ReimbursementUpdate(BaseModel):
+    status: Optional[str] = None   # APPROVED / REJECTED
+
+class ReimbursementResponse(BaseModel):
+    id: int
+    employee_id: int
+    title: str
+    amount: float
+    receipt_file: Optional[str]
+    status: str
+    submitted_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+# Overtime
+class OvertimeCreate(BaseModel):
+    employee_id: int
+    hours_worked: float
+    overtime_rate: float
+    month: date
+
+class OvertimeResponse(BaseModel):
+    id: int
+    employee_id: int
+    hours_worked: float
+    overtime_rate: float
+    total_amount: float
+    # base_salary_per_hour: float
+    month: date
+    
+    class Config:
+        from_attributes = True
+
+# Tax Report
+class TaxReportResponse(BaseModel):
+    id: int
+    employee_id: int
+    financial_year: str
+    total_earnings: float
+    total_tax: float
+    generated_at: datetime
+    class Config:
+        from_attributes = True
+
+# Payroll Dispute
+class DisputeCreate(BaseModel):
+    employee_id: int
+    payroll_id: Optional[int] = None
+    issue_title: str
+    description: Optional[str] = None
+
+class DisputeUpdate(BaseModel):
+    status: str
+    resolution: Optional[str] = None
+
+class DisputeResponse(BaseModel):
+    id: int
+    employee_id: int
+    payroll_id: Optional[int]
+    issue_title: str
+    description: Optional[str]
+    status: str
+    created_at: datetime
+    resolved_at: Optional[datetime]
+    class Config:
+        from_attributes = True
+
+# Document
+class DocumentResponse(BaseModel):
+    id: int
+    employee_id: int
+    document_type: str
+    file_url: str
+    uploaded_at: datetime
+    
+    class Config:
+        from_attributes = True
+        
+# --
+class DepartmentAnalytics(BaseModel):
+    department: str
+    total_salary: float
+    employee_count: int
+    avg_salary: float
+
+class MonthlyTrend(BaseModel):
+    month: str
+    net_payout: float
+    total_overtime: float
+    total_bonuses: float
+
+class OvertimeAnalysis(BaseModel):
+    month: str
+    total_hours: float
+    total_amount: float
+    employee_count: int
+
+class BonusDistribution(BaseModel):
+    month: str
+    total_bonus: float
+    employee_count: int
+
+class EmployeeCost(BaseModel):
+    department: str
+    total_salary: float
+    total_overtime: float
+    total_bonuses: float
+    total_cost: float
+
+class AnalyticsResponse(BaseModel):
+    # KPI cards
+    total_employees: int
+    current_month_payroll: float
+    pending_payslips: int
+    total_overtime_this_month: float
+    total_bonuses_this_month: float
+
+    # Charts
+    department_breakdown: List[DepartmentAnalytics]
+    payroll_trend: List[MonthlyTrend]
+    overtime_analysis: List[OvertimeAnalysis]
+    bonus_distribution: List[BonusDistribution]
+    employee_cost: List[EmployeeCost]
+
+    model_config = ConfigDict(from_attributes=True)

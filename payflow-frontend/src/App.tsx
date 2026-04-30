@@ -24,10 +24,24 @@ import { Warning } from '@mui/icons-material';
 import Approvals from './pages/Approvals';
 import SalaryHistory from './pages/SalaryHistory';
 import Loans from './pages/Loans';
-import CompliancePage from './pages/Compliance';   // exported component is CompliancePage
+import CompliancePage from './pages/Compliance';
 import BulkPayroll from './pages/BulkPayroll';
 import AuditLogs from './pages/AuditLogs';
 import ReportsExportPage from './pages/ReportsExportPage';
+
+// Phase 3 – Employee Self‑Service
+import EmployeeSelfService from './pages/EmployeeSelfService';
+import Reimbursements from './pages/Reimbursements';
+import Overtime from './pages/Overtime';
+import TaxReports from './pages/TaxReports';
+import Disputes from './pages/Disputes';
+import Documents from './pages/Documents';
+
+// Phase 4 – Analytics (HR only)
+import Analytics from './pages/Analytics';
+
+// Payroll Schedule (HR/Admin)
+import PayrollSchedule from './pages/PayrollSchedule';
 
 // ---------- Route guards ----------
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -80,76 +94,80 @@ const AppRoutes: React.FC = () => {
         <Route path="/dashboard" element={<Dashboard />} />
 
         {/* Phase 1 – HR/ADMIN only */}
-        <Route
-          path="/employees"
-          element={<RequireRole allowedRoles={['HR', 'ADMIN']}><Employees /></RequireRole>}
+        <Route path="/employees" element={
+          <RequireRole allowedRoles={['HR', 'ADMIN']}><Employees /></RequireRole>}
         />
-        <Route
-          path="/salary-structure"
-          element={<RequireRole allowedRoles={['HR', 'ADMIN']}><SalaryStructure /></RequireRole>}
+        <Route path="/salary-structure" element={
+          <RequireRole allowedRoles={['HR', 'ADMIN']}><SalaryStructure /></RequireRole>}
         />
-        <Route
-          path="/payroll"
-          element={<RequireRole allowedRoles={['HR', 'ADMIN']}><PayrollPage /></RequireRole>}
+        <Route path="/payroll" element={
+          <RequireRole allowedRoles={['HR', 'ADMIN']}><PayrollPage /></RequireRole>}
         />
-        <Route
-          path="/bonuses"
-          element={<RequireRole allowedRoles={['HR', 'ADMIN']}><Bonuses /></RequireRole>}
+        <Route path="/bonuses" element={
+          <RequireRole allowedRoles={['HR', 'ADMIN']}><Bonuses /></RequireRole>}
         />
-        <Route
-          path="/reports"
-          element={<RequireRole allowedRoles={['HR', 'ADMIN']}><Reports /></RequireRole>}
+        <Route path="/reports" element={
+          <RequireRole allowedRoles={['HR', 'ADMIN']}><Reports /></RequireRole>}
         />
-        <Route
-          path="/tax"
-          element={<RequireRole allowedRoles={['HR', 'ADMIN']}><Tax /></RequireRole>}
+        <Route path="/tax" element={
+          <RequireRole allowedRoles={['HR', 'ADMIN']}><Tax /></RequireRole>}
         />
-        <Route
-          path="/attendance"
-          element={<RequireRole allowedRoles={['HR', 'ADMIN']}><Attendance /></RequireRole>}
+        <Route path="/attendance" element={
+          <RequireRole allowedRoles={['HR', 'ADMIN']}><Attendance /></RequireRole>}
         />
-
-        {/* Employee self‑service attendance (any authenticated user) */}
         <Route path="/my-attendance" element={<Attendance />} />
 
         {/* Phase 2 – HR/ADMIN only */}
-        <Route
-          path="/approvals"
-          element={<RequireRole allowedRoles={['ADMIN']}><Approvals /></RequireRole>}
+        <Route path="/approvals" element={
+          <RequireRole allowedRoles={['ADMIN']}><Approvals /></RequireRole>}
         />
-        <Route
-          path="/salary-history"
-          element={<RequireRole allowedRoles={['HR', 'ADMIN']}><SalaryHistory /></RequireRole>}
+        <Route path="/salary-history" element={
+          <RequireRole allowedRoles={['HR', 'ADMIN']}><SalaryHistory /></RequireRole>}
         />
-        <Route
-          path="/loans"
-          element={<RequireRole allowedRoles={['HR', 'ADMIN']}><Loans /></RequireRole>}
+        <Route path="/loans" element={
+          <RequireRole allowedRoles={['HR', 'ADMIN']}><Loans /></RequireRole>}
         />
-        <Route
-          path="/compliance"
-          element={<RequireRole allowedRoles={['HR', 'ADMIN']}><CompliancePage /></RequireRole>}
+        <Route path="/compliance" element={
+          <RequireRole allowedRoles={['HR', 'ADMIN']}><CompliancePage /></RequireRole>}
         />
-        <Route
-          path="/bulk-payroll"
-          element={<RequireRole allowedRoles={['HR', 'ADMIN']}><BulkPayroll /></RequireRole>}
+        <Route path="/bulk-payroll" element={
+          <RequireRole allowedRoles={['HR', 'ADMIN']}><BulkPayroll /></RequireRole>}
         />
-        <Route
-          path="/audit-logs"
-          element={<RequireRole allowedRoles={['ADMIN']}><AuditLogs /></RequireRole>}
+        <Route path="/audit-logs" element={
+          <RequireRole allowedRoles={['ADMIN']}><AuditLogs /></RequireRole>}
         />
-        <Route
-          path="/export"
-          element={<RequireRole allowedRoles={['HR', 'ADMIN']}><ReportsExportPage /></RequireRole>}
+        <Route path="/export" element={
+          <RequireRole allowedRoles={['HR', 'ADMIN']}><ReportsExportPage /></RequireRole>}
         />
 
         {/* Routes for ALL authenticated users */}
         <Route path="/payslips" element={<Payslips />} />
         <Route path="/profile" element={<EmployeeProfile />} />
         <Route path="/notifications" element={<NotificationsPage />} />
+
+        {/* Phase 3 – Employee Self‑Service (all authenticated users) */}
+        <Route path="/self-service" element={<EmployeeSelfService />} />
+        <Route path="/reimbursements" element={<Reimbursements />} />
+        <Route path="/overtime" element={<Overtime />} />
+        <Route path="/tax-reports" element={<TaxReports />} />
+        <Route path="/disputes" element={<Disputes />} />
+        <Route path="/documents" element={<Documents />} />
+
+        {/* Phase 4 – Analytics (HR only) */}
+        <Route path="/analytics" element={
+          <RequireRole allowedRoles={['HR']}><Analytics /></RequireRole>
+        } />
+
+        {/* Payroll Schedule (HR/Admin) */}
+        <Route path="/payroll-schedule" element={
+          <RequireRole allowedRoles={['HR', 'ADMIN']}><PayrollSchedule /></RequireRole>
+        } />
       </Route>
 
       {/* Catch‑all redirect */}
-      <Route path="*" element={user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} />
+      <Route path="*" element={
+        user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+      } />
     </Routes>
   );
 };

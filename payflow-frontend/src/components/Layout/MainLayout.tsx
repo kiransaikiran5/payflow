@@ -17,6 +17,8 @@ import {
   Avatar,
   Menu,
   MenuItem,
+  Stack,
+  Chip,
 } from '@mui/material';
 
 import {
@@ -38,6 +40,8 @@ import {
   FileDownload,
   ThumbUp,
   Notifications,
+  Description,
+  Schedule,
 } from '@mui/icons-material';
 
 import { useAuth } from '../../context/AuthContext';
@@ -58,11 +62,13 @@ const MainLayout: React.FC = () => {
   const handleMenuClose = () => setAnchorEl(null);
 
   const handleLogout = () => {
+    handleMenuClose();
     logout();
     navigate('/login');
   };
 
   const menuItems = [
+    // Phase 1
     { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
     { text: 'Employees', icon: <People />, path: '/employees', show: isHR },
     { text: 'Salary Structure', icon: <Calculate />, path: '/salary-structure', show: isHR },
@@ -75,6 +81,7 @@ const MainLayout: React.FC = () => {
     { text: 'Reports', icon: <Assessment />, path: '/reports', show: isHR },
     { text: 'Notifications', icon: <Notifications />, path: '/notifications' },
 
+    // Phase 2
     { text: 'Approvals', icon: <ThumbUp />, path: '/approvals', show: isAdmin },
     { text: 'Salary History', icon: <History />, path: '/salary-history', show: isHR },
     { text: 'Loans', icon: <AttachMoney />, path: '/loans', show: isHR },
@@ -82,30 +89,29 @@ const MainLayout: React.FC = () => {
     { text: 'Bulk Payroll', icon: <CloudUpload />, path: '/bulk-payroll', show: isHR },
     { text: 'Audit Logs', icon: <Security />, path: '/audit-logs', show: isAdmin },
     { text: 'Export Reports', icon: <FileDownload />, path: '/export', show: isHR },
+
+    // Phase 3
+    { text: 'Employee Services', icon: <Dashboard />, path: '/self-service', show: !isHR && !isAdmin },
+    { text: 'Reimbursements', icon: <AttachMoney />, path: '/reimbursements', show: isHR || isAdmin },
+    { text: 'Overtime', icon: <AccessTime />, path: '/overtime', show: isHR || isAdmin },
+    { text: 'Tax Reports', icon: <Assessment />, path: '/tax-reports', show: isHR || isAdmin },
+    { text: 'Disputes', icon: <Gavel />, path: '/disputes', show: isHR || isAdmin },
+    { text: 'Documents', icon: <Description />, path: '/documents', show: isHR || isAdmin },
+    { text: 'Analytics', icon: <Assessment />, path: '/analytics', show: isHR || isAdmin },
+    { text: 'Payroll Schedule', icon: <Schedule />, path: '/payroll-schedule', show: isHR || isAdmin },
   ].filter((item) => item.show !== false);
 
   const drawer = (
     <div>
-      {/* Logo */}
       <Toolbar sx={{ justifyContent: 'center', py: 2 }}>
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 'bold',
-            color: '#2563eb',
-          }}
-        >
+        <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#2563eb' }}>
           PayFlow
         </Typography>
       </Toolbar>
-
       <Divider />
-
-      {/* Menu */}
       <List sx={{ mt: 2 }}>
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
-
           return (
             <ListItem key={item.text} disablePadding>
               <ListItemButton
@@ -117,30 +123,17 @@ const MainLayout: React.FC = () => {
                   mx: 1,
                   my: 0.5,
                   borderRadius: 2,
-
                   backgroundColor: isActive ? '#eff6ff' : 'transparent',
                   color: isActive ? '#2563eb' : '#334155',
-
-                  '&:hover': {
-                    backgroundColor: '#f1f5f9',
-                  },
+                  '&:hover': { backgroundColor: '#f1f5f9' },
                 }}
               >
-                <ListItemIcon
-                  sx={{
-                    color: isActive ? '#2563eb' : '#64748b',
-                    minWidth: 40,
-                  }}
-                >
+                <ListItemIcon sx={{ color: isActive ? '#2563eb' : '#64748b', minWidth: 40 }}>
                   {item.icon}
                 </ListItemIcon>
-
                 <ListItemText
                   primary={item.text}
-                  primaryTypographyProps={{
-                    fontSize: 14,
-                    fontWeight: 500,
-                  }}
+                  primaryTypographyProps={{ fontSize: 14, fontWeight: 500 }}
                 />
               </ListItemButton>
             </ListItem>
@@ -165,38 +158,68 @@ const MainLayout: React.FC = () => {
         }}
       >
         <Toolbar>
-          <IconButton
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
+          <IconButton edge="start" onClick={handleDrawerToggle} sx={{ mr: 2, display: { sm: 'none' } }}>
             <MenuIcon />
           </IconButton>
 
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+          <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 500 }}>
             Payroll Management System
           </Typography>
 
+          {/* Notification Bell */}
           <NotificationBell />
 
-          <IconButton onClick={handleMenuOpen}>
-            <Avatar sx={{ width: 32, height: 32, bgcolor: '#2563eb' }}>
-              {user?.username.charAt(0).toUpperCase()}
-            </Avatar>
-          </IconButton>
+          {/* User Info with Avatar */}
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ ml: 2 }}>
+            <Chip
+              label={user?.role}
+              size="small"
+              color={user?.role === 'ADMIN' ? 'error' : user?.role === 'HR' ? 'primary' : 'default'}
+              variant="outlined"
+            />
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <Typography variant="body2" fontWeight={500} color="text.primary">
+                {user?.username}
+              </Typography>
+            </Box>
+            <IconButton onClick={handleMenuOpen} size="small">
+              <Avatar sx={{ width: 36, height: 36, bgcolor: '#2563eb', fontWeight: 'bold' }}>
+                {user?.username.charAt(0).toUpperCase()}
+              </Avatar>
+            </IconButton>
+          </Stack>
 
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-            <MenuItem disabled>
-              {user?.username} ({user?.role})
-            </MenuItem>
-
+          {/* Profile Menu */}
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            PaperProps={{ sx: { mt: 1, minWidth: 200, borderRadius: 2 } }}
+          >
+            <Box sx={{ px: 2, py: 1 }}>
+              <Typography variant="subtitle2" fontWeight={600}>
+                {user?.username}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {user?.email}
+              </Typography>
+            </Box>
             <Divider />
-
-            <MenuItem onClick={handleLogout}>
+            <MenuItem
+              onClick={handleLogout}
+              sx={{
+                color: 'error.main',
+                mx: 1,
+                borderRadius: 1,
+                '&:hover': { backgroundColor: '#fee2e2' },
+              }}
+            >
               <ListItemIcon>
-                <Logout fontSize="small" />
+                <Logout fontSize="small" color="error" />
               </ListItemIcon>
-              Logout
+              <Typography variant="body2" fontWeight={600}>Logout</Typography>
             </MenuItem>
           </Menu>
         </Toolbar>
@@ -204,7 +227,6 @@ const MainLayout: React.FC = () => {
 
       {/* Sidebar */}
       <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
-        {/* Mobile */}
         <Drawer
           variant="temporary"
           open={mobileOpen}
@@ -212,28 +234,17 @@ const MainLayout: React.FC = () => {
           ModalProps={{ keepMounted: true }}
           sx={{
             display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': {
-              width: drawerWidth,
-              backgroundColor: '#ffffff',
-              borderRight: '1px solid #e2e8f0',
-            },
+            '& .MuiDrawer-paper': { width: drawerWidth, backgroundColor: '#ffffff', borderRight: '1px solid #e2e8f0' },
           }}
         >
           {drawer}
         </Drawer>
-
-        {/* Desktop */}
         <Drawer
           variant="permanent"
           open
           sx={{
             display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': {
-              width: drawerWidth,
-              backgroundColor: '#ffffff',
-              borderRight: '1px solid #e2e8f0',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            },
+            '& .MuiDrawer-paper': { width: drawerWidth, backgroundColor: '#ffffff', borderRight: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' },
           }}
         >
           {drawer}
@@ -241,15 +252,7 @@ const MainLayout: React.FC = () => {
       </Box>
 
       {/* Main Content */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          minHeight: '100vh',
-          backgroundColor: '#f8fafc',
-        }}
-      >
+      <Box component="main" sx={{ flexGrow: 1, p: 3, minHeight: '100vh', backgroundColor: '#f8fafc' }}>
         <Toolbar />
         <Outlet />
       </Box>
