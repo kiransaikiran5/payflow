@@ -43,18 +43,16 @@ The application is split into two phases:
 - **Enhanced RBAC** – Employees see only their own data; HR manages operations; Admin oversees approvals & logs
 - **Advanced Notifications** – Alerts for loan deductions, salary revisions, approval status, etc.
 
-  ### 🔹 Phase 3 – Employee Self‑Service & Analytics ⭐
-| Module | Description |
-|--------|-------------|
-| **Reimbursements** | Submit expense requests, upload receipts, HR approval/rejection workflow |
-| **Overtime** | Record overtime hours & rates, automatically included in payroll |
-| **Tax Reports** | Generate annual tax reports per employee |
-| **Payroll Disputes** | Employees raise disputes, HR resolves with comments |
-| **Documents** | Upload and manage employee documents |
-| **Employee Self‑Service Hub** | Centralised dashboard with shortcuts to all self‑service features |
-| **Payroll Schedule** | View upcoming payroll dates (auto‑generated on the 1st of each month) |
-| **Analytics Dashboard** | Department‑wise salary breakdown, payroll trends, overtime analysis, bonus distribution, employee cost analysis |
-| **Advanced Notifications** | Real‑time triggers for payroll, reimbursements, overtime, disputes, tax reports (employee + HR) |
+  ###  Phase 3 – Employee Self‑Service & Analytics 
+ **Reimbursements** - Submit expense requests, upload receipts, HR approval/rejection workflow 
+ **Overtime** - Record overtime hours & rates, automatically included in payroll 
+ **Tax Reports** - Generate annual tax reports per employee 
+ **Payroll Disputes** - Employees raise disputes, HR resolves with comments 
+ **Documents** - Upload and manage employee documents 
+ **Employee Self‑Service Hub** - Centralised dashboard with shortcuts to all self‑service features 
+ **Payroll Schedule** - View upcoming payroll dates (auto‑generated on the 1st of each month)
+  **Analytics Dashboard** -Department‑wise salary breakdown, payroll trends, overtime analysis, bonus distribution, employee cost analysis 
+ **Advanced Notifications** - Real‑time triggers for payroll, reimbursements, overtime, disputes, tax reports (employee + HR) 
 
 ---
 
