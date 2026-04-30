@@ -42,17 +42,30 @@ The application is split into two phases:
 - **Audit Logs** – Track every important action (create, update, approve, etc.) with Admin‑only view
 - **Enhanced RBAC** – Employees see only their own data; HR manages operations; Admin oversees approvals & logs
 - **Advanced Notifications** – Alerts for loan deductions, salary revisions, approval status, etc.
+  
+---
 
-  ###  Phase 3 – Employee Self‑Service & Analytics 
- **Reimbursements** - Submit expense requests, upload receipts, HR approval/rejection workflow 
- **Overtime** - Record overtime hours & rates, automatically included in payroll 
- **Tax Reports** - Generate annual tax reports per employee 
- **Payroll Disputes** - Employees raise disputes, HR resolves with comments 
- **Documents** - Upload and manage employee documents 
- **Employee Self‑Service Hub** - Centralised dashboard with shortcuts to all self‑service features 
- **Payroll Schedule** - View upcoming payroll dates (auto‑generated on the 1st of each month)
-  **Analytics Dashboard** -Department‑wise salary breakdown, payroll trends, overtime analysis, bonus distribution, employee cost analysis 
- **Advanced Notifications** - Real‑time triggers for payroll, reimbursements, overtime, disputes, tax reports (employee + HR) 
+**Phase 3 – Employee Self‑Service & Analytics**
+
+- **Reimbursements** – Submit expense requests with receipt upload; HR/Admin approval/rejection workflow.
+
+- **Overtime Management** – Record overtime hours and pay rates; automatically included in payroll calculations.
+
+- **Tax Reports** – Generate annual tax reports per employee with income and tax‑paid summaries.
+
+- **Payroll Disputes** – Employees raise payroll concerns; HR resolves with comments and status tracking.
+
+- **Documents** – Upload and manage employee‑related documents (contracts, certificates, etc.).
+
+- **Employee Self‑Service Hub** – Central dashboard with shortcuts to payslips, attendance, reimbursements, overtime, disputes, and documents.
+
+- **Payroll Schedule** – View upcoming payroll dates; month‑end reminders; auto‑generation on the 1st of each month.
+
+- **Analytics Dashboard** – Department‑wise salary breakdown, monthly payroll trends, overtime analysis, bonus distribution, and employee cost analysis.
+
+- **Advanced Notifications** – Real‑time alerts for reimbursement status, overtime approval, dispute updates, tax report generation, and payroll events (both for employees and HR/Admin).
+
+---
 
 ---
 
